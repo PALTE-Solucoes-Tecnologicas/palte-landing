@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+MSG_FILE="$1"
+FIRST_LINE="$(head -n1 "$MSG_FILE")"
+
+# 1. Bloqueia coautoria e assinatura de IA
+if grep -qiE '^co-authored-by:|generated with|🤖' "$MSG_FILE"; then
+  echo "ERRO: mensagem contém Co-Authored-By ou assinatura de IA. Remova e tente de novo." >&2
+  exit 1
+fi
+
+# 2. Exige Conventional Commits (merge e revert automáticos passam)
+PATTERN='^(feat|fix|refactor|perf|test|docs|style|build|ci|chore|revert)(\((web|api|lead|infra|release)\))?!?: .{1,72}$'
+if [[ ! "$FIRST_LINE" =~ $PATTERN ]] && [[ ! "$FIRST_LINE" =~ ^Merge ]]; then
+  echo "ERRO: primeira linha fora do padrão Conventional Commits:" >&2
+  echo "  $FIRST_LINE" >&2
+  exit 1
+fi
